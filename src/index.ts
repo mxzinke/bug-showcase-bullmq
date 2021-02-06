@@ -1,4 +1,4 @@
-import { Queue, QueueScheduler, Worker } from "bullmq";
+import { Queue, QueueScheduler, RedisOptions, Worker } from "bullmq";
 import { updateHealthJob, updateSensorsJob } from "./jobs";
 
 type JobType = "UPDATE_HEALTH" | "UPDATE_SENSORS";
@@ -7,7 +7,7 @@ interface JobData {
 	machine: string;
 }
 
-const QUEUE_NAME = "iot-jobs-queue";
+const QUEUE_NAME = "iot-jobs-queue-test";
 
 // All available jobs, which are repeated
 const JOBS: {
@@ -37,8 +37,11 @@ const INSTALLATIONS = [
 ];
 
 // The actual magic
-const queue = new Queue<JobData, void, string>(QUEUE_NAME);
-new QueueScheduler(QUEUE_NAME);
+const connection: RedisOptions = {
+	keyPrefix: "some-prefix:",
+};
+const queue = new Queue<JobData, void, string>(QUEUE_NAME, { connection });
+new QueueScheduler(QUEUE_NAME, { connection });
 
 // Spawning all jobs:
 Object.keys(JOBS).forEach((jobType) => {
@@ -62,10 +65,14 @@ Object.keys(JOBS).forEach((jobType) => {
 	});
 });
 
-new Worker<JobData, void, string>(QUEUE_NAME, async (job) => {
-	if (!INSTALLATIONS.includes(job.data.machine)) {
-		return await queue.removeRepeatable(job.name, job.opts.repeat!);
-	}
+new Worker<JobData, void, string>(
+	QUEUE_NAME,
+	async (job) => {
+		if (!INSTALLATIONS.includes(job.data.machine)) {
+			return await queue.removeRepeatable(job.name, job.opts.repeat!);
+		}
 
-	await JOBS[job.data.type].work(job.data.machine);
-});
+		await JOBS[job.data.type].work(job.data.machine);
+	},
+	{ connection }
+);
