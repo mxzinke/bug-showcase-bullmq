@@ -1,0 +1,19 @@
+{
+  "name": "bug-showcase-bullmq",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:mxzinke/bug-showcase-bullmq.git",
+  "author": "Maximilian Zinke <zinke@smark.de>",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node src/index.ts"
+  },
+  "devDependencies": {
+    "prettier": "^2.2.1",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
+  },
+  "dependencies": {
+    "bullmq": "1.14.2"
+  }
+}
